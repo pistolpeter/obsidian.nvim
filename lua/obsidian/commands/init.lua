@@ -23,6 +23,7 @@ local command_lookups = {
   ObsidianPasteImg = "obsidian.commands.paste_img",
   ObsidianExtractNote = "obsidian.commands.extract_note",
   ObsidianDebug = "obsidian.commands.debug",
+  ObsidianWeek = "obsidian.commands.week",
 }
 
 local M = setmetatable({
@@ -147,6 +148,8 @@ M.register("ObsidianToday", { opts = { nargs = "?", desc = "Open today's daily n
 M.register("ObsidianYesterday", { opts = { nargs = 0, desc = "Open the daily note for the previous working day" } })
 
 M.register("ObsidianTomorrow", { opts = { nargs = 0, desc = "Open the daily note for the next working day" } })
+
+M.register("ObsidianWeek", { opts = { nargs = 0, desc = "Open this weeks weekly note" } })
 
 M.register("ObsidianNew", { opts = { nargs = "?", desc = "Create a new note" } })
 

@@ -962,15 +962,15 @@ Client.find_tags_async = function(self, term, callback, opts)
       search_terms[#search_terms + 1] = "#" .. search.Patterns.TagCharsOptional .. t .. search.Patterns.TagCharsOptional
       -- frontmatter tag in multiline list
       search_terms[#search_terms + 1] = "\\s*- "
-        .. search.Patterns.TagCharsOptional
-        .. t
-        .. search.Patterns.TagCharsOptional
-        .. "$"
+          .. search.Patterns.TagCharsOptional
+          .. t
+          .. search.Patterns.TagCharsOptional
+          .. "$"
       -- frontmatter tag in inline list
       search_terms[#search_terms + 1] = "tags: .*"
-        .. search.Patterns.TagCharsOptional
-        .. t
-        .. search.Patterns.TagCharsOptional
+          .. search.Patterns.TagCharsOptional
+          .. t
+          .. search.Patterns.TagCharsOptional
     else
       -- tag in the wild
       search_terms[#search_terms + 1] = "#" .. search.Patterns.TagCharsRequired
@@ -1405,11 +1405,11 @@ Client.parse_title_id_path = function(self, title, id, dir)
   else
     local bufpath = Path.buffer(0):resolve()
     if
-      self.opts.new_notes_location == config.NewNotesLocation.current_dir
-      -- note is actually in the workspace.
-      and self.dir:is_parent_of(bufpath)
-      -- note is not in dailies folder
-      and (self.opts.daily_notes.folder == nil or not (self.dir / self.opts.daily_notes.folder):is_parent_of(bufpath))
+        self.opts.new_notes_location == config.NewNotesLocation.current_dir
+        -- note is actually in the workspace.
+        and self.dir:is_parent_of(bufpath)
+        -- note is not in dailies folder
+        and (self.opts.daily_notes.folder == nil or not (self.dir / self.opts.daily_notes.folder):is_parent_of(bufpath))
     then
       base_dir = self.buf_dir or assert(bufpath:parent())
     else
@@ -1570,6 +1570,81 @@ Client.daily_note_path = function(self, datetime)
   return path, id
 end
 
+--- Get the path to a weekly note.
+---
+---@param datetime integer|?
+---
+---@return obsidian.Path, string
+Client.weekly_note_path = function(self, datetime)
+  datetime = datetime and datetime or os.time()
+
+  ---@type obsidian.Path
+  local path = Path:new(self.dir)
+
+  if self.opts.weekly_notes.folder ~= nil then
+    ---@type obsidian.Path
+    ---@diagnostic disable-next-line: assign-type-mismatch
+    path = path / self.opts.weekly_notes.folder
+  end
+  -- elseif self.opts.notes_subdir ~= nil then
+  --   ---@type obsidian.Path
+  --   ---@diagnostic disable-next-line: assign-type-mismatch
+  --   path = path / self.opts.notes_subdir
+  -- end
+
+  local id = tostring(os.date("%Y-W%W", datetime))
+
+  path = path / (id .. ".md")
+
+  return path, id
+end
+--- Open (or create) the weekly note.
+---
+---@param self obsidian.Client
+---@param datetime integer
+---
+---@return obsidian.Note
+---
+---@private
+Client._weekly = function(self, datetime)
+  local templates = require "obsidian.templates"
+
+
+  local path, id = self:weekly_note_path(datetime)
+
+  local alias
+  if self.opts.daily_notes.alias_format ~= nil then
+    alias = tostring(os.date(self.opts.daily_notes.alias_format, datetime))
+  else
+    alias = tostring(os.date("%Y-W%W", datetime))
+  end
+
+  -- Create Note object and save if it doesn't already exist.
+  local note = Note.new(id, { alias }, { "weekly-notes" }, path)
+  if not note:exists() then
+    local write_frontmatter = true
+    if "Weekly Template.md" then
+      templates.clone_template("Weekly Template.md", path, self, note:display_name())
+      note = Note.from_file(path)
+      if note.has_frontmatter then
+        write_frontmatter = false
+      end
+    end
+
+    if write_frontmatter then
+      local frontmatter = nil
+      if self.opts.note_frontmatter_func ~= nil then
+        frontmatter = self.opts.note_frontmatter_func(note)
+      end
+      note:save { insert_frontmatter = self:should_save_frontmatter(note), frontmatter = frontmatter }
+    end
+
+    log.info("Created weekly note '%s' at '%s'", note.id, self:vault_relative_path(note.path) or note.path)
+  end
+
+  return note
+end
+
 --- Open (or create) the daily note.
 ---
 ---@param self obsidian.Client
@@ -1644,6 +1719,10 @@ end
 ---@return obsidian.Note
 Client.daily = function(self, offset_days)
   return self:_daily(os.time() + (offset_days * 3600 * 24))
+end
+
+Client.week = function(self)
+  return self:_weekly(os.time())
 end
 
 --- Manually update extmarks in a buffer.

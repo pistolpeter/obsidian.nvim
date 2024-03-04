@@ -23,6 +23,7 @@ local config = {}
 ---@field mappings obsidian.config.MappingOpts
 ---@field picker obsidian.config.PickerOpts
 ---@field daily_notes obsidian.config.DailyNotesOpts
+---@field weekly_notes obsidian.config.WeeklyNotesOpts
 ---@field use_advanced_uri boolean|?
 ---@field open_app_foreground boolean|?
 ---@field sort_by obsidian.config.SortBy|?
@@ -55,6 +56,7 @@ config.ClientOpts.default = function()
     mappings = config.MappingOpts.default(),
     picker = config.PickerOpts.default(),
     daily_notes = config.DailyNotesOpts.default(),
+    weekly_notes = config.WeeklyNotesOpts.default(),
     use_advanced_uri = nil,
     open_app_foreground = false,
     sort_by = "modified",
@@ -132,8 +134,8 @@ config.ClientOpts.normalize = function(opts, defaults)
     if warn then
       log.warn_once(
         "The config options 'completion.prepend_note_id', 'completion.prepend_note_path', and 'completion.use_path_only' "
-          .. "are deprecated. Please use 'wiki_link_func' instead.\n"
-          .. "See https://github.com/epwalsh/obsidian.nvim/pull/406"
+        .. "are deprecated. Please use 'wiki_link_func' instead.\n"
+        .. "See https://github.com/epwalsh/obsidian.nvim/pull/406"
       )
     end
   end
@@ -143,7 +145,7 @@ config.ClientOpts.normalize = function(opts, defaults)
     opts.completion.preferred_link_style = nil
     log.warn_once(
       "The config option 'completion.preferred_link_style' is deprecated, please use the top-level "
-        .. "'preferred_link_style' instead."
+      .. "'preferred_link_style' instead."
     )
   end
 
@@ -152,7 +154,7 @@ config.ClientOpts.normalize = function(opts, defaults)
     opts.completion.new_notes_location = nil
     log.warn_once(
       "The config option 'completion.new_notes_location' is deprecated, please use the top-level "
-        .. "'new_notes_location' instead."
+      .. "'new_notes_location' instead."
     )
   end
 
@@ -160,7 +162,7 @@ config.ClientOpts.normalize = function(opts, defaults)
     opts.detect_cwd = nil
     log.warn_once(
       "The 'detect_cwd' field is deprecated and no longer has any affect.\n"
-        .. "See https://github.com/epwalsh/obsidian.nvim/pull/366 for more details."
+      .. "See https://github.com/epwalsh/obsidian.nvim/pull/366 for more details."
     )
   end
 
@@ -190,6 +192,7 @@ config.ClientOpts.normalize = function(opts, defaults)
   opts.mappings = opts.mappings and opts.mappings or defaults.mappings
   opts.picker = tbl_override(defaults.picker, opts.picker)
   opts.daily_notes = tbl_override(defaults.daily_notes, opts.daily_notes)
+  -- might need weekly here
   opts.templates = tbl_override(defaults.templates, opts.templates)
   opts.ui = tbl_override(defaults.ui, opts.ui)
   opts.attachments = tbl_override(defaults.attachments, opts.attachments)
@@ -342,6 +345,21 @@ config.DailyNotesOpts.default = function()
     folder = nil,
     date_format = nil,
     alias_format = nil,
+  }
+end
+
+---@class obsidian.config.WeeklyNotesOpts
+---
+---@field folder string|?
+---@field template string|?
+config.WeeklyNotesOpts = {}
+
+--- Get defaults.
+---
+---@return obsidian.config.WeeklyNotesOpts
+config.WeeklyNotesOpts.default = function()
+  return {
+    folder = nil,
   }
 end
 
